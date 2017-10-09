@@ -9,11 +9,11 @@ These releases cater to RHEL/CentOS and its derivatives which still bundle Monit
 ## Building Monit RPM
 
 ```bash
-git clone https://github.com/apisnetworks.com/monit.git
+git clone https://github.com/apisnetworks/monit.git
 cd monit
 sh build.sh
 rpm -Uhv RPMS/`uname -m`/*.rpm
-systemctl monit restart
+systemctl restart monit
 ```
 
 ## Acknowledgements
