@@ -1,28 +1,23 @@
 Name:           monit
-Version:        5.24.0
+Version:        5.26.0
 Release:        1%{?dist}
 Summary:        Manages and monitors processes, files, directories and devices
 
-Group:          Applications/Internet
 License:        AGPLv3
 URL:            http://mmonit.com/monit/
 Source0:        http://mmonit.com/monit/dist/%{name}-%{version}.tar.gz
-Source2:        monit.logrotate
-Source3:        monit.service
-Source4:        monit-logging-conf
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source1:        monit.service
 
+BuildRequires: gcc
 BuildRequires: flex
 BuildRequires: openssl-devel
 BuildRequires: pam-devel
 BuildRequires: byacc
 BuildRequires: systemd
+BuildRequires: zlib-devel
 
-Requires(post): systemd-sysv
-Requires(post): systemd
-Requires(preun): systemd
-Requires(postun): systemd
-
+%{?systemd_requires}
+BuildRequires: systemd
 
 %description
 monit is a utility for managing and monitoring, processes, files, directories
@@ -44,27 +39,18 @@ make install DESTDIR=$RPM_BUILD_ROOT
 install -p -D -m0600 monitrc $RPM_BUILD_ROOT%{_sysconfdir}/monitrc
 install -p -D -m0755 monit $RPM_BUILD_ROOT%{_bindir}/monit
 
-# Log file & logrotate config
-install -p -D -m0644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/monit
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log
-install -m0600 /dev/null $RPM_BUILD_ROOT%{_localstatedir}/log/monit.log
-
 # systemd service file
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
-install -m0644 %{SOURCE3} ${RPM_BUILD_ROOT}%{_unitdir}/monit.service
+install -m0644 %{SOURCE1} ${RPM_BUILD_ROOT}%{_unitdir}/monit.service
 
 # Let's include some good defaults
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/monit.d
-install -p -D -m0644 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/monit.d/logging
 
 %{__sed} -i 's/# set daemon  120.*/set daemon 60  # check services at 1-minute intervals/' \
     $RPM_BUILD_ROOT%{_sysconfdir}/monitrc
 
 %{__sed} -i 's/#  include \/etc\/monit.d\/\*/include \/etc\/monit.d\/\*/' \
     $RPM_BUILD_ROOT%{_sysconfdir}/monitrc
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post
 %systemd_post monit.service
@@ -80,28 +66,52 @@ rm -rf $RPM_BUILD_ROOT
 %postun
 %systemd_postun_with_restart monit.service
 
-%triggerun -- monit < 5.3.1-1
-/usr/bin/systemd-sysv-convert --save monit > /dev/null 2>&1 || :
-/bin/systemctl --no-reload enable monit.service > /dev/null 2>&1 || :
-/sbin/chkconfig --del monit > /dev/null 2>&1 || :
-/bin/systemctl try-restart monit.server > /dev/null 2>&1 || :
-
 %files
-%defattr(-,root,root,-)
 %doc COPYING README
 %config(noreplace) %{_sysconfdir}/monitrc
-%config(noreplace) %{_sysconfdir}/monit.d/logging
-%config(noreplace) %{_sysconfdir}/logrotate.d/monit
-%config %ghost %{_localstatedir}/log/monit.log
 %{_unitdir}/monit.service
 %{_sysconfdir}/monit.d/
 %{_bindir}/%{name}
 %{_mandir}/man1/monit.1*
 
-
 %changelog
-* Mon Oct 09 2017 Matt Saladna <matt@apisnetworks.com> - 5.24.0
-- Bump to Monit 5.24.0 release
+* Tue Mar 3 2020 Stewart Adam <s.adam@diffingo.com> - 5.26.0-1
+- Update to 5.26.0
+
+* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.25.1-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Fri Feb 01 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.25.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Mon Jan 14 2019 Björn Esser <besser82@fedoraproject.org> - 5.25.1-5
+- Rebuilt for libcrypt.so.2 (#1666033)
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.25.1-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Thu Feb 08 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.25.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Sat Jan 20 2018 Björn Esser <besser82@fedoraproject.org> - 5.25.1-2
+- Rebuilt for switch to libxcrypt
+
+* Tue Dec 26 2017 Stewart Adam <s.adam@diffingo.com> - 5.25.1-1
+- Update to new upstream release 5.25.1 (#1311640, #1390112)
+
+* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.19.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.19.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.19.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
+* Sat Oct 15 2016 Stewart Adam <s.adam@diffingo.com> - 5.19.0-1
+- Update to upstream release 5.19.0, fixes #1325633
+- Remove sysvinit conversion to systemd, fixes #1094916
+- Remove logging to /var/log/monit.log in favor of logging to journald
 
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 5.14-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
