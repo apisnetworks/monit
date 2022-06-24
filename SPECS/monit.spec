@@ -1,5 +1,5 @@
 Name:           monit
-Version:        5.26.0
+Version:        5.32.0
 Release:        1%{?dist}
 Summary:        Manages and monitors processes, files, directories and devices
 
@@ -67,7 +67,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/monit.d
 %systemd_postun_with_restart monit.service
 
 %files
-%doc COPYING README
+%doc COPYING 
 %config(noreplace) %{_sysconfdir}/monitrc
 %{_unitdir}/monit.service
 %{_sysconfdir}/monit.d/
