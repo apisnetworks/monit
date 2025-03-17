@@ -1,6 +1,6 @@
 Name:           monit
 Version:        5.34.4
-Release:        1.20250315%{?dist}
+Release:        1.20250316%{?dist}
 Summary:        Manages and monitors processes, files, directories and devices
 
 License:        AGPLv3
